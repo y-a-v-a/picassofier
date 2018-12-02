@@ -25,11 +25,11 @@ function readSourceDir() {
  * @param {Array<string>} masksList List of files to open
  * @returns {Promise<Promise<gd.Image>>}
  */
-async function loadMasks(masksList) {
+function loadMasks(masksList) {
   // create Promises to load masks
   const loadingPromises = masksList.map(loadMask);
 
-  return await Promise.all(loadingPromises);
+  return Promise.all(loadingPromises);
 }
 
 /**
@@ -37,8 +37,8 @@ async function loadMasks(masksList) {
  * @param {stirng} pathName
  * @returns {Promise<gd.Image>}
  */
-async function loadMask(pathName) {
-  return await new Promise((resolve, reject) => {
+function loadMask(pathName) {
+  return new Promise((resolve, reject) => {
     resolve(gd.openPng(pathName));
   }).catch(error => {
     throw new Error(error);
@@ -49,16 +49,16 @@ async function loadMask(pathName) {
  * Read path to masks and load them as pngs
  * @returns {Promise<gd.Image>}
  */
-async function getMasksAsPng() {
+function getMasksAsPng() {
   const masksDirList = readMasksDir();
-  return await loadMasks(masksDirList);
+  return loadMasks(masksDirList);
 }
 
 /**
  * open input image and make it 1024 wide proportionally
  */
-async function scaleJpeg(pathToJpeg) {
-  return await new Promise((resolve, reject) => {
+function scaleJpeg(pathToJpeg) {
+  return new Promise((resolve, reject) => {
     gd.openJpeg(pathToJpeg, (error, image) => {
       if (error) {
         reject(error);
@@ -99,9 +99,9 @@ function getRandomJpegQuality() {
  * @param {string} pathName Path to the location where to store the image
  * @param {gd.Image} imageData Data to store in the file
  */
-async function saveImage(pathName, imageData) {
+function saveImage(pathName, imageData) {
   const quality = getRandomJpegQuality();
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     imageData.saveJpeg(pathName, quality, error => {
       if (error) {
         return reject(error);
@@ -125,7 +125,7 @@ function getJpegData(gdImage) {
  * @param {Buffer} jpegData
  * @retusn {Promise}
  */
-async function getOpencvMatrix(jpegData) {
+function getOpencvMatrix(jpegData) {
   return new Promise((resolve, reject) => {
     // load jpeg pointer into opencv
     cv.readImage(jpegData, (error, opencvMatrix) => {
@@ -141,37 +141,41 @@ async function getOpencvMatrix(jpegData) {
  * @param {Object}
  * @returns {Promise<Array>}
  */
-async function getFacesData(opencvMatrix) {
+function getFacesData(opencvMatrix) {
   const detectionOptions = {
     scale: 1.3,
     neighbors: 3,
     min: [80,80]
   };
 
-  return await new Promise((resolve, reject) => {
-    opencvMatrix.detectObject(cv.FACE_CASCADE, detectionOptions, async (error, facesData) => {
+  return new Promise((resolve, reject) => {
+    opencvMatrix.detectObject(cv.FACE_CASCADE, detectionOptions, (error, facesData) => {
       if (error || !facesData) {
         return reject(error || `No facesData found`);
       }
       resolve(facesData);
     });
-  });
+  }).catch(reason => console.log(reason));
 }
 
 async function main() {
   const maskImages = await getMasksAsPng();
   const sourceImages = readSourceDir();
 
-  const sourceImagesResampled = await Promise.all(sourceImages.map(async element => {
-    return await scaleJpeg(element);
+  const sourceImagesResampled = await Promise.all(sourceImages.map(element => {
+    return scaleJpeg(element);
   }));
 
-  sourceImagesResampled.forEach(async mainImage => {
+  sourceImagesResampled.forEach(async (mainImage, idx) => {
     const jpegData = getJpegData(mainImage);
     const opencvMatrix = await getOpencvMatrix(jpegData);
 
     // start face detection
     const facesData = await getFacesData(opencvMatrix);
+    if (!facesData) {
+      console.log('No facesData found, skipping...');
+      return;
+    }
 
     // for every detected face, apply a mask to it
     for (let i = 0; i < facesData.length; i++) {
@@ -199,6 +203,9 @@ async function main() {
     // save resulting image
     const fileName = getNewFileName();
     const saved = await saveImage(fileName, mainImage);
+    if (!saved) {
+      console.log(`Could not save ${fileName}`);
+    }
   });
 }
 
