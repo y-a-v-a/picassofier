@@ -162,12 +162,9 @@ async function main() {
   const maskImages = await getMasksAsPng();
   const sourceImages = readSourceDir();
 
-  const sourceImagesResampled = await Promise.all(sourceImages.map(element => {
-    return scaleJpeg(element);
-  }));
-
-  sourceImagesResampled.forEach(async (mainImage, idx) => {
-    const jpegData = getJpegData(mainImage);
+  sourceImages.forEach(async sourceImage => {
+    const scaledImage = await scaleJpeg(sourceImage);
+    const jpegData = getJpegData(scaledImage);
     const opencvMatrix = await getOpencvMatrix(jpegData);
 
     // start face detection
@@ -210,4 +207,3 @@ async function main() {
 }
 
 main();
-
