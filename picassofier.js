@@ -2,6 +2,16 @@ const gd = require('node-gd');
 const cv = require('opencv');
 const glob = require("glob");
 const assert = require('assert');
+const debug = require('debug')('picassofier');
+
+const colors = [
+  '0F65A9', // blue
+  'FBD336', // yellow
+  'CC202A', // red
+  '0F6F4C', // green
+  'E9E9EB', // white
+  'EB8032' // orange
+];
 
 /**
  * @returns {Array<string>} List of found mask images
@@ -55,27 +65,43 @@ function getMasksAsPng() {
 }
 
 /**
- * open input image and make it 1024 wide proportionally
+ * open input image and make it x wide proportionally
+ * @param {string} pathToJpeg - the path to the image to resize
  */
 function scaleJpeg(pathToJpeg) {
+  const targetWidth = 1440;
   return new Promise((resolve, reject) => {
-    gd.openJpeg(pathToJpeg, (error, image) => {
+    gd.openJpeg(pathToJpeg, async (error, image) => {
       if (error) {
-        reject(error);
+        return reject(error);
       }
-      const w = image.width;
-      const h = image.height;
-      const dw = 1024;
-      const dh = Math.round((h / w) * 1024);
+      const scaledImage = await resizeImage(image, targetWidth);
+      resolve(scaledImage);
+    });
+  });
+}
 
-      gd.createTrueColor(dw, dh, (error, newImage) => {
-        if (error) {
-          reject(error);
-        }
-        // copy original image on new 1024-based px canvas
-        image.copyResampled(newImage, 0, 0, 0, 0, newImage.width, newImage.height, image.width, image.height);
-        resolve(newImage);
-      });
+/**
+ * Proportionally scale image to given width
+ * @param {gd.Image} image - the image to resize
+ * @param {number} targetWidth - the target width to scale to
+ * @returns {Promise<gd.Image} The resized image
+ */
+function resizeImage(image, targetWidth = 1024) {
+  return new Promise((resolve, reject) => {
+    const w = image.width;
+    const h = image.height;
+    const dw = targetWidth;
+    const dh = Math.round((h / w) * targetWidth);
+
+    gd.createTrueColor(dw, dh, (error, newImage) => {
+      if (error) {
+        return reject(error);
+      }
+      // copy original image on new x-based px canvas
+      image.copyResampled(newImage, 0, 0, 0, 0, newImage.width, newImage.height, image.width, image.height);
+      debug(`Scaled image to ${targetWidth}px width`);
+      resolve(newImage);
     });
   });
 }
@@ -91,13 +117,14 @@ function getNewFileName() {
  * @returns {number} A random rounded number between 0 and 10
  */
 function getRandomJpegQuality() {
-  return Math.round(Math.random() * 10);
+  return Math.round(Math.random() * 5);
 }
 
 /**
  * Save image
  * @param {string} pathName Path to the location where to store the image
  * @param {gd.Image} imageData Data to store in the file
+ * @returns {boolean} whehter saving was succesfull
  */
 function saveImage(pathName, imageData) {
   const quality = getRandomJpegQuality();
@@ -106,6 +133,7 @@ function saveImage(pathName, imageData) {
       if (error) {
         return reject(error);
       }
+      debug(`Saved result to ${pathName}`);
       resolve(true);
     });
   });
@@ -123,7 +151,7 @@ function getJpegData(gdImage) {
 /**
  * Gets the open cv matrix of jpeg data
  * @param {Buffer} jpegData
- * @retusn {Promise}
+ * @returns {Promise}
  */
 function getOpencvMatrix(jpegData) {
   return new Promise((resolve, reject) => {
@@ -132,6 +160,7 @@ function getOpencvMatrix(jpegData) {
       if (error || !opencvMatrix) {
         return reject(error || 'No opencvMatrix');
       }
+      debug(`Found open cv matrix`);
       resolve(opencvMatrix);
     });
   });
@@ -153,9 +182,45 @@ function getFacesData(opencvMatrix) {
       if (error || !facesData) {
         return reject(error || `No facesData found`);
       }
+      debug('Detected face data');
       resolve(facesData);
     });
-  }).catch(reason => console.log(reason));
+  }).catch(reason => debug(reason));
+}
+
+/**
+ * Get random number from 0 to max exclusive
+ * @param {number} max - The threshold
+ * @returns {number} The resulting number
+ */
+function randomIndex(max) {
+  return Math.round(Math.random() * (max - 1));
+}
+
+/**
+ * Create a function to retrieve a unique as possible index
+ * @param {number} max - Initial threshold
+ * @returns {Function} The function to call for a unique index
+ */
+function uniqueIndexCreator(max) {
+  let indexCache = [];
+
+  /**
+   * @returns {number} The resulting index
+   */
+  const creator = function() {
+    let tries = 0;
+    let idx = randomIndex(max);
+
+    while(indexCache.indexOf(idx) > -1 && tries <= (max - 1)) {
+      idx = randomIndex(max);
+      tries++;
+    }
+    indexCache.push(idx);
+    return idx;
+  };
+
+  return creator;
 }
 
 async function main() {
@@ -170,38 +235,67 @@ async function main() {
     // start face detection
     const facesData = await getFacesData(opencvMatrix);
     if (!facesData) {
-      console.log('No facesData found, skipping...');
+      debug('No facesData found, skipping...');
       return;
     }
 
-    // for every detected face, apply a mask to it
+    // for every detected face, apply a mask or color to it
+    const colorIndex = uniqueIndexCreator(colors.length);
+    const maskIndex = uniqueIndexCreator(maskImages.length);
+
     for (let i = 0; i < facesData.length; i++) {
-      // grab random mask
-      let idx = Math.round(Math.random() * (maskImages.length - 1));
-      const randomMask = maskImages[idx];
       const faceCoords = facesData[i];
 
-      // reposition mask relative to detected face
-      const offsetX = 50;
-      const offsetY = 90;
+      if (Math.round(Math.random()) === 0) {
+        const offsetW = 18;
+        const faceX = faceCoords.x + Math.floor(faceCoords.width / 2);
+        const faceY = faceCoords.y + Math.floor(faceCoords.height / 2);
+        const faceW = faceCoords.width - offsetW;
 
-      // copy mask upon face
-      randomMask.copyResized(mainImage,
-        faceCoords.x - offsetX, faceCoords.y - offsetY,
-        0, 0,
-        faceCoords.width + (offsetX * 2), faceCoords.height + (offsetY * 2),
-        randomMask.width, randomMask.height
-      );
-      // debug: show detected face as rectangle
-      // mainImage.rectangle(faceCoords.x, faceCoords.y, faceCoords.x + faceCoords.width,
-      // faceCoords.y + faceCoords.height, 0xff0000);
+        // add baldesarri color
+        const idx = colorIndex();
+        const color = colors[idx];
+        const colorNumber = parseInt(color, 16);
+
+        scaledImage.filledEllipse(faceX, faceY, faceW, faceW, colorNumber);
+        debug(`Added color dot to image`);
+      } else {
+        // reposition mask relative to detected face
+        const offsetX = 40;
+        const offsetY = 70;
+        const faceX = faceCoords.x - offsetX;
+        const faceY = faceCoords.y - offsetY;
+        const faceW = faceCoords.width + (offsetX * 2);
+        const faceH = faceCoords.height + (offsetY * 2);
+
+        // grab random mask
+        let idx = maskIndex();
+        const randomMask = maskImages[idx];
+
+        // copy mask upon face
+        randomMask.copyResized(scaledImage,
+          faceX, faceY,
+          0, 0,
+          faceW, faceH,
+          randomMask.width, randomMask.height
+        );
+        // debug: show detected face as rectangle
+        // scaledImage.rectangle(faceCoords.x, faceCoords.y, faceCoords.x + faceCoords.width,
+        // faceCoords.y + faceCoords.height, 0xff0000);
+        debug(`Added mask to image`);
+      }
     }
+
+    // scale image further down to create cubist image
+    const rescaledImage = await resizeImage(scaledImage, 640);
 
     // save resulting image
     const fileName = getNewFileName();
-    const saved = await saveImage(fileName, mainImage);
+    const saved = await saveImage(fileName, rescaledImage);
     if (!saved) {
-      console.log(`Could not save ${fileName}`);
+      debug(`Could not save ${fileName}`);
+    } else {
+      debug('Saved resulting image');
     }
   });
 }

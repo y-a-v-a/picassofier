@@ -4,11 +4,13 @@
   "description": "Picassofier",
   "main": "picassofier.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "DEBUG=* node ./picassofier.js"
   },
   "author": "",
   "license": "WTFPL",
   "dependencies": {
+    "debug": "^4.1.0",
     "glob": "^7.1.2",
     "node-gd": "^1.5.4",
     "opencv": "6.0.0"
