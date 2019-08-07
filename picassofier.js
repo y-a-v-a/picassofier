@@ -287,7 +287,8 @@ async function main() {
     }
 
     // scale image further down to create cubist image
-    const rescaledImage = await resizeImage(scaledImage, 640);
+    let rescaledImage = await resizeImage(scaledImage, 480);
+    rescaledImage = await resizeImage(scaledImage, 1024);
 
     // save resulting image
     const fileName = getNewFileName();
