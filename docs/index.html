@@ -39,17 +39,22 @@
             imgElement.src = URL.createObjectURL(e.target.files[0]);
         }, false);
         
-        imgElement.onload = function () {
+        imgElement.onload = async function () {
             let mat = cv.imread(imgElement);
             cv.imshow('canvasInput', mat);
             mat.delete();
+
+            const response = await fetch('./haarcascade_frontalface_default.xml');
+            const buffer = await response.arrayBuffer();
+            const data = new Uint8Array(buffer);
+            cv.FS_createDataFile('/', 'haarcascade_frontalface_default.xml', data, true, false, false);
 
             let src = cv.imread('canvasInput');
             let gray = new cv.Mat();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
 
             let faceCascade = new cv.CascadeClassifier();
-            faceCascade.load('./haarcascade_frontalface_default.xml');
+            faceCascade.load('haarcascade_frontalface_default.xml');
 
             let faces = new cv.RectVector();
             let msize = new cv.Size(0, 0);
