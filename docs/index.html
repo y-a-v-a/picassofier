@@ -34,9 +34,11 @@
     <script type="text/javascript">
         let imgElement = document.getElementById('imageSrc');
         let inputElement = document.getElementById('fileInput');
+
         inputElement.addEventListener('change', (e) => {
             imgElement.src = URL.createObjectURL(e.target.files[0]);
         }, false);
+        
         imgElement.onload = function () {
             let mat = cv.imread(imgElement);
             cv.imshow('canvasInput', mat);
@@ -47,7 +49,7 @@
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
 
             let faceCascade = new cv.CascadeClassifier();
-            faceCascade.load('/haarcascade_frontalface_default.xml');
+            faceCascade.load('./haarcascade_frontalface_default.xml');
 
             let faces = new cv.RectVector();
             let msize = new cv.Size(0, 0);
