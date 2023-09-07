@@ -38,16 +38,11 @@
         inputElement.addEventListener('change', (e) => {
             imgElement.src = URL.createObjectURL(e.target.files[0]);
         }, false);
-        
-        imgElement.onload = async function () {
+
+        imgElement.onload = function () {
             let mat = cv.imread(imgElement);
             cv.imshow('canvasInput', mat);
             mat.delete();
-
-            const response = await fetch('./haarcascade_frontalface_default.xml');
-            const buffer = await response.arrayBuffer();
-            const data = new Uint8Array(buffer);
-            cv.FS_createDataFile('/', 'haarcascade_frontalface_default.xml', data, true, false, false);
 
             let src = cv.imread('canvasInput');
             let gray = new cv.Mat();
@@ -81,8 +76,13 @@
 
         var Module = {
             // https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized
-            onRuntimeInitialized() {
+            async onRuntimeInitialized() {
                 document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+
+                const response = await fetch('./haarcascade_frontalface_default.xml');
+                const buffer = await response.arrayBuffer();
+                const data = new Uint8Array(buffer);
+                cv.FS_createDataFile('/', 'haarcascade_frontalface_default.xml', data, true, false, false);
             }
         };
     </script>
