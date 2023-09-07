@@ -22,6 +22,7 @@
     <p id="status">OpenCV.js is loading...</p>
     <div class="main">
         <div class="inputoutput">
+            <img id="mask" src="./mask.png" alt="mask" />
             <img id="imageSrc" alt="No Image" />
             <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
         </div>
@@ -33,6 +34,7 @@
     </div>
     <script type="text/javascript">
         let imgElement = document.getElementById('imageSrc');
+        let maskElement = document.getElementById('mask');
         let inputElement = document.getElementById('fileInput');
 
         inputElement.addEventListener('change', (e) => {
@@ -43,6 +45,8 @@
             let mat = cv.imread(imgElement);
             cv.imshow('canvasInput', mat);
             mat.delete();
+
+            let mask = cv.imread('maskElement');
 
             let src = cv.imread('canvasInput');
             let gray = new cv.Mat();
@@ -62,6 +66,7 @@
                 let point2 = new cv.Point(faces.get(i).x + faces.get(i).width,
                     faces.get(i).y + faces.get(i).height);
                 cv.rectangle(src, point1, point2, [255, 0, 0, 255]);
+                mask.copyTo(roiSrc);
                 roiGray.delete(); roiSrc.delete();
             }
 
