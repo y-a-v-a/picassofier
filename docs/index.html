@@ -4,12 +4,21 @@
 <head>
     <meta charset="utf-8">
     <title>Hello OpenCV.js</title>
+    <style>
+        .main {
+            display: flex;
+        }
+        canvas, img {
+            display: block;
+            margin-bottom: 24px;
+        }
+    </style>
 </head>
 
 <body>
     <h2>Hello OpenCV.js</h2>
     <p id="status">OpenCV.js is loading...</p>
-    <div>
+    <div class="main">
         <div class="inputoutput">
             <img id="imageSrc" alt="No Image" />
             <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
