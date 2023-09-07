@@ -68,9 +68,9 @@
                 let point2 = new cv.Point(faces.get(i).x + faces.get(i).width,
                     faces.get(i).y + faces.get(i).height);
                 cv.rectangle(src, point1, point2, [255, 0, 0, 255]);
-                let rect = new cv.Rect(point1, point2, faces.get(i).width, faces.get(i).height);
-                let newRoi = src.roi(rect);
-                mask.copyTo(newRoi);
+                // let rect = new cv.Rect(point1, point2, faces.get(i).width, faces.get(i).height);
+                // let newRoi = src.roi(rect);
+                mask.copyTo(roiSrc);
                 roiGray.delete(); roiSrc.delete();
             }
 
