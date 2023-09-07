@@ -59,6 +59,8 @@
             let msize = new cv.Size(0, 0);
             faceCascade.detectMultiScale(gray, faces, 1.1, 3, 0, msize, msize);
 
+            // roi = region of interest
+            // mat = matrix
             for (let i = 0; i < faces.size(); ++i) {
                 let roiGray = gray.roi(faces.get(i));
                 let roiSrc = src.roi(faces.get(i))
@@ -67,7 +69,7 @@
                     faces.get(i).y + faces.get(i).height);
                 cv.rectangle(src, point1, point2, [255, 0, 0, 255]);
                 let rect = new cv.Rect(point1, point2, faces.get(i).width, faces.get(i).height);
-                let newRoi = new cv.Mat(src, rect);
+                let newRoi = src.roi(rect);
                 mask.copyTo(newRoi);
                 roiGray.delete(); roiSrc.delete();
             }
