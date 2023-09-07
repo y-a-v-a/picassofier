@@ -46,7 +46,7 @@
             cv.imshow('canvasInput', mat);
             mat.delete();
 
-            let mask = cv.imread('mask');
+            let mask = cv.imread(mask);
 
             let src = cv.imread('canvasInput');
             let gray = new cv.Mat();
