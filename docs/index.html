@@ -46,7 +46,7 @@
             cv.imshow('canvasInput', mat);
             mat.delete();
 
-            let mask = cv.imread(maskElement);
+            let mask = cv.imread('mask');
 
             let src = cv.imread('canvasInput');
             let gray = new cv.Mat();
@@ -66,7 +66,9 @@
                 let point2 = new cv.Point(faces.get(i).x + faces.get(i).width,
                     faces.get(i).y + faces.get(i).height);
                 cv.rectangle(src, point1, point2, [255, 0, 0, 255]);
-                mask.copyTo(roiSrc);
+                let rect = new cv.Rect(point1, point2, faces.get(i).width, faces.get(i).height);
+                let newRoi = new cv.Mat(src, rect);
+                mask.copyTo(newRoi);
                 roiGray.delete(); roiSrc.delete();
             }
 
