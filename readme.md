@@ -11,3 +11,7 @@ Create these directories:
 - output - target direcoty where resulting images are stored
 
 (c) 2018 y-a-v-a.org
+
+
+https://learnopencv.com/opencv-threshold-python-cpp/
+https://docs.opencv.org/4.8.0/d8/d01/group__imgproc__color__conversions.html#gga4e0972be5de079fed4e3a10e24ef5ef0a95d70bf0c1b5aa58d1eb8abf03161f21
