@@ -10,7 +10,7 @@ Create these directories:
 - masks - should contain PNG images of masks, preferably transparent background
 - output - target direcoty where resulting images are stored
 
-(c) 2018 y-a-v-a.org
+(c) 2018-2023 y-a-v-a.org
 
 
 https://learnopencv.com/opencv-threshold-python-cpp/

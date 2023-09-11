@@ -96,6 +96,7 @@
             <span class="plus">plus...</span>
             <span class="moins">moins...</span>
           </span>
+          <span class="attribution"></span>
         </p>
       </div>
       <div class="toolbar">
@@ -116,6 +117,21 @@
       const inputElement = document.getElementById('fileInput');
       const canvasOutput = document.getElementById('canvasOutput');
       const outputImage = document.getElementById('outputImage');
+
+      const groups = [
+        [
+          './groups/group-people-standing-checking-devices.jpg',
+          'Image by <a href="https://www.freepik.com/free-photo/group-people-standing-checking-devices_5617849.htm">Freepik</a>',
+        ],
+        [
+          './groups/group-young-people-texting.jpg',
+          'Image by <a href="https://www.freepik.com/free-photo/group-young-people-texting_6479245.htm#query=group%20of%20people%20standing%20internet&position=4&from_view=search&track=ais">Freepik</a>',
+        ],
+        [
+          './groups/group-diverse-people-using-smartphones.jpg',
+          '<a href="https://www.freepik.com/free-photo/group-diverse-people-using-smartphones_2978519.htm">Image by rawpixel.com</a> on Freepik',
+        ],
+      ];
 
       // preload some masks
       const masks = [...Array(6)].map((el, idx) => {
@@ -256,7 +272,10 @@
             false
           );
 
-          processImage();
+          // processImage();
+          const groupImg = groups[Math.floor(Math.random() * groups.length)];
+          imgElement.src = groupImg[0];
+          document.querySelector('.attribution').innerHTML = groupImg[1];
         },
       };
     </script>
