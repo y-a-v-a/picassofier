@@ -12,7 +12,6 @@
   "dependencies": {
     "debug": "^4.1.0",
     "glob": "^7.1.2",
-    "node-gd": "^1.5.4",
-    "opencv": "6.0.0"
+    "node-gd": "^3.0.0"
   }
 }
